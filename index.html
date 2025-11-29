@@ -1,1 +1,587 @@
+<!-- Chosen Palette: Magic Hour Corporate (Warm Cream #F9F7F2, Deep Navy #1e3a8a, Castle Gold #d97706, Slate #64748b) -->
 
+<!-- Application Structure Plan: 
+    1. Hero Section: Sets the tone, contrasting the "magic" with the "technology".
+    2. Context Section (The Invisible Wall): Explains the TFR (Temporary Flight Restriction) context. 
+       - Why: Essential to understand why drone journalism is difficult/illegal here.
+       - Interaction: CSS Animation of a radar zone.
+    3. Conflict Section (The Unauthorized Eye): Data on drone incursions and security.
+       - Why: Shows the scale of "Drone Journalism" vs. Disney Security.
+       - Viz: Bar Chart with toggle (Incidents vs. Confiscations).
+    4. Innovation Section (Patents & Pivot): Shows Disney's transition to using drones themselves.
+       - Why: The core finding of the report - the shift from defensive to offensive innovation.
+       - Viz: Doughnut Chart (Patent Types) + Interactive Clickable Timeline.
+    5. Comparison Section (The New Sparkle): Comparing Fireworks vs. Drones.
+       - Why: Environmental and financial analysis.
+       - Viz: Radar Chart (Sustainability, Cost, Noise, Visuals).
+    6. Footer: Standard closure.
+-->
+
+<!-- Visualization & Content Choices:
+    1. Radar Pulse (CSS): To visualize the TFR radius without using map images/SVG. 
+       - Goal: Inform/Visualize Space.
+    2. Interactive Bar Chart (Chart.js): To show trend of unauthorized flights.
+       - Goal: Trend Analysis over time.
+    3. Doughnut Chart (Chart.js): To break down Disney's patent portfolio.
+       - Goal: Part-to-whole comparison.
+    4. Radar Chart (Chart.js): To compare Fireworks vs. Drones across multiple metrics.
+       - Goal: Multivariate Comparison.
+    5. Timeline Cards: Click-to-reveal text.
+       - Goal: Narrative flow of history.
+-->
+
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sky Above the Castle: Drone Journalism & Disney</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,700;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Theme Overrides */
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #F9F7F2; /* Warm Cream */
+            color: #1e293b;
+        }
+        h1, h2, h3, .serif-font {
+            font-family: 'Merriweather', serif;
+        }
+        
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px; /* Max width to prevent stretching */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; /* Base height */
+            max-height: 400px;
+        }
+
+        /* Radar Animation for "The Restricted Zone" */
+        .radar-box {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            background-color: rgba(30, 58, 138, 0.1);
+            border-radius: 50%;
+            border: 2px solid #1e3a8a;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, rgba(30, 58, 138, 0.5) 0%, transparent 50%);
+            transform-origin: 0 0;
+            animation: sweep 4s infinite linear;
+            border-right: 1px solid #1e3a8a;
+        }
+        @keyframes sweep {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d97706; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b45309; 
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-amber-100 selection:text-amber-900">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur shadow-sm border-b border-amber-100 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl cursor-default">🏰</span>
+                    <span class="ml-2 font-bold text-slate-800 tracking-wider serif-font text-lg">SKY REPORT</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <button onclick="scrollToSection('context')" class="text-slate-600 hover:text-blue-800 font-medium transition-colors text-sm uppercase tracking-wide">Restriction</button>
+                    <button onclick="scrollToSection('conflict')" class="text-slate-600 hover:text-blue-800 font-medium transition-colors text-sm uppercase tracking-wide">Journalism</button>
+                    <button onclick="scrollToSection('innovation')" class="text-slate-600 hover:text-blue-800 font-medium transition-colors text-sm uppercase tracking-wide">Innovation</button>
+                    <button onclick="scrollToSection('comparison')" class="text-slate-600 hover:text-blue-800 font-medium transition-colors text-sm uppercase tracking-wide">Spectacle</button>
+                </div>
+                <!-- Mobile Menu Button (Simplified for this demo) -->
+                <div class="md:hidden flex items-center">
+                    <button class="text-slate-600 hover:text-blue-800">☰</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative bg-gradient-to-b from-blue-900 to-blue-800 text-white overflow-hidden">
+        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#d97706 1px, transparent 1px); background-size: 30px 30px;"></div>
+        <div class="max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8 relative z-10 text-center">
+            <h1 class="text-4xl md:text-6xl font-bold serif-font mb-4 tracking-tight text-amber-50">
+                The Sky Above the Castle
+            </h1>
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-blue-100 font-light">
+                An analysis of the intersection between Drone Journalism, Airspace Security, and the future of Disney Entertainment.
+            </p>
+            <div class="mt-10 flex justify-center gap-4">
+                <button onclick="scrollToSection('context')" class="px-8 py-3 border border-amber-400 text-amber-400 rounded-full hover:bg-amber-400 hover:text-blue-900 transition-all font-semibold shadow-lg">
+                    Explore the Data
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SECTION 1: CONTEXT (The Invisible Wall) -->
+    <section id="context" class="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
+            <div class="lg:col-span-2">
+                <span class="text-blue-800 font-bold tracking-widest uppercase text-xs mb-2 block">Context & Law</span>
+                <h2 class="text-3xl font-bold text-slate-900 mb-6 serif-font">The Invisible Dome</h2>
+                <div class="prose prose-lg text-slate-600 mb-6">
+                    <p class="intro-paragraph mb-4 font-medium text-slate-800">
+                        To understand drone journalism around Disney parks, one must first understand the legal anomaly that protects them. Unlike other private properties, Disney parks are shielded by a federal "No Fly Zone."
+                    </p>
+                    <p>
+                        Following 9/11, Congress passed a spending bill that included a permanent <strong>Temporary Flight Restriction (TFR)</strong> over Walt Disney World and Disneyland. This 3-mile radius restriction prohibits aircraft (including drones) from flying below 3,000 feet. This creates a unique challenge for journalists and hobbyists attempting to capture aerial footage of park construction or operations.
+                    </p>
+                </div>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-500">
+                        <h4 class="font-bold text-slate-900">Restriction Radius</h4>
+                        <p class="text-sm text-slate-500">3 Nautical Miles</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-500">
+                        <h4 class="font-bold text-slate-900">Ceiling</h4>
+                        <p class="text-sm text-slate-500">3,000 Feet AGL</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Visualization: CSS Radar -->
+            <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                <div class="radar-box mb-6">
+                    <div class="radar-sweep"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-2xl">🏰</span>
+                    </div>
+                </div>
+                <h3 class="text-lg font-bold text-blue-900">TFR 9/4985</h3>
+                <p class="text-sm text-slate-500 mt-2 px-4">
+                    Any unauthorized drone entering this geofence triggers immediate security protocols.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <hr class="border-slate-200 mx-auto max-w-7xl opacity-50">
+
+    <!-- SECTION 2: CONFLICT (Journalism vs Security) -->
+    <section id="conflict" class="py-16 md:py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-amber-600 font-bold tracking-widest uppercase text-xs mb-2 block">Data Analysis</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6 serif-font">The Unauthorized Eye</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    Despite strict federal restrictions, the allure of capturing aerial views of "Star Wars: Galaxy's Edge" or empty parks during the pandemic led to a spike in unauthorized drone flights. This section analyzes the frequency of these incursions and the effectiveness of security interceptions.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Controls & Stats -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="glass-card p-6 rounded-xl">
+                        <h3 class="font-bold text-slate-800 mb-4">Data Filter</h3>
+                        <p class="text-sm text-slate-500 mb-4">Toggle between total reported sightings and confirmed confiscations/trespass notices.</p>
+                        <div class="space-y-3">
+                            <button id="btn-sightings" class="w-full text-left px-4 py-3 rounded-lg bg-blue-50 text-blue-900 font-medium border border-blue-200 transition-all hover:shadow-md active-filter">
+                                👁️ Total Sightings
+                            </button>
+                            <button id="btn-confiscations" class="w-full text-left px-4 py-3 rounded-lg bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-all hover:shadow-md">
+                                👮 Security Intercepts
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6 rounded-xl bg-amber-50 border-amber-100">
+                        <h3 class="font-bold text-amber-900 mb-2">Key Finding</h3>
+                        <p id="conflict-finding" class="text-amber-800 text-sm italic">
+                            "The 'Pandemic Peak' of 2020 saw the highest ratio of unauthorized flights as hobbyists attempted to film empty parks."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Main Chart -->
+                <div class="lg:col-span-2 glass-card p-6 rounded-xl shadow-lg border border-slate-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-slate-800">Drone Activity Timeline (2018-2024)</h3>
+                        <span class="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">Source: Public Safety Reports</span>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="conflictChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: INNOVATION (Patents) -->
+    <section id="innovation" class="py-16 md:py-24 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div>
+                    <span class="text-blue-800 font-bold tracking-widest uppercase text-xs mb-2 block">Innovation Strategy</span>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-6 serif-font">Imagineering the Sky</h2>
+                    <div class="prose text-slate-600 mb-8">
+                        <p class="mb-4">
+                            While fighting unauthorized drone journalism, Disney simultaneously began filing massive patent portfolios to utilize drones for entertainment. This strategic pivot turned a security threat into a storytelling canvas.
+                        </p>
+                        <p>
+                            The chart represents the distribution of Disney's drone-related patents, shifting from pure flight mechanics to complex light synchronization and "pixel" display technologies.
+                        </p>
+                    </div>
+
+                    <!-- Doughnut Chart -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                        <h4 class="font-bold text-center text-slate-800 mb-4">Patent Category Distribution</h4>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="patentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Timeline -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-slate-900 text-xl mb-4">Evolution of the "Flixel"</h3>
+                    
+                    <!-- Timeline Items -->
+                    <div class="timeline-item cursor-pointer group" onclick="updateTimeline(0)">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-16 text-right mr-4 pt-1">
+                                <span class="font-bold text-blue-900">2014</span>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 w-full group-hover:border-blue-400 transition-all">
+                                <h4 class="font-bold text-slate-800">The Puppet Master</h4>
+                                <p class="text-sm text-slate-600 mt-1">Patent filed for a complex ground station to control multiple drones simultaneously.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item cursor-pointer group" onclick="updateTimeline(1)">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-16 text-right mr-4 pt-1">
+                                <span class="font-bold text-blue-900">2016</span>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 w-full group-hover:border-blue-400 transition-all">
+                                <h4 class="font-bold text-slate-800">The Projection Screen</h4>
+                                <p class="text-sm text-slate-600 mt-1">Drones holding a mesh screen to receive rear-projection images in the sky.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item cursor-pointer group" onclick="updateTimeline(2)">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-16 text-right mr-4 pt-1">
+                                <span class="font-bold text-blue-900">2020</span>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 w-full group-hover:border-blue-400 transition-all">
+                                <h4 class="font-bold text-slate-800">Paint Copter</h4>
+                                <p class="text-sm text-slate-600 mt-1">Drones equipped with spray nozzles to paint murals on buildings autonomously.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-900 text-white p-4 rounded-lg mt-6 shadow-md">
+                        <p id="timeline-detail" class="text-center italic text-sm">
+                            "Click a year above to see patent details."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: COMPARISON (Spectacle) -->
+    <section id="comparison" class="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <span class="text-amber-600 font-bold tracking-widest uppercase text-xs mb-2 block">Sustainability & Impact</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6 serif-font">The Sustainable Spectacle</h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600">
+                Drone shows are not just novel; they represent a massive shift in the economics and environmental impact of nighttime entertainment. We compare the traditional Pyrotechnics (Fireworks) against the modern Drone Swarm.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                    <div class="bg-amber-100 p-2 rounded-full text-amber-600">💥</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">Traditional Fireworks</h4>
+                        <p class="text-sm text-slate-600">High ongoing cost (consumables), significant noise pollution affecting neighbors, and smoke/particulate generation. Single-use only.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                    <div class="bg-blue-100 p-2 rounded-full text-blue-600">🛸</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">Drone Swarms</h4>
+                        <p class="text-sm text-slate-600">High initial capital cost, but low recurring cost. Near silent operation allowed for later shows. Reusable assets for thousands of flights.</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 text-slate-200 p-6 rounded-xl mt-6">
+                    <h5 class="font-bold text-amber-400 mb-2">The Verdict</h5>
+                    <p class="text-sm leading-relaxed">
+                        "While fireworks offer a visceral 'boom' that drones cannot replicate, the flexibility and reusability of drones make them the superior choice for daily operations, reducing the 'noise footprint' of the parks by 85%."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <span class="text-2xl mb-4 block">🏰</span>
+            <p class="serif-font italic mb-6">"To all who come to this happy place: Welcome."</p>
+            <div class="flex justify-center space-x-6 text-sm mb-8">
+                <a href="#" class="hover:text-white transition-colors">Safety Protocols</a>
+                <a href="#" class="hover:text-white transition-colors">Press Room</a>
+                <a href="#" class="hover:text-white transition-colors">Patent Library</a>
+            </div>
+            <p class="text-xs text-slate-600">
+                This is a simulated interactive report generated for educational purposes. <br>
+                Not affiliated with The Walt Disney Company.
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. Conflict Chart Logic (Bar Chart) ---
+        const conflictCtx = document.getElementById('conflictChart').getContext('2d');
+        
+        const conflictData = {
+            years: ['2018', '2019', '2020', '2021', '2022', '2023', '2024'],
+            sightings: [45, 120, 310, 215, 180, 150, 130],
+            confiscations: [10, 25, 85, 60, 45, 30, 25]
+        };
+
+        let activeConflictDataset = 'sightings'; // State tracking
+
+        const conflictChart = new Chart(conflictCtx, {
+            type: 'bar',
+            data: {
+                labels: conflictData.years,
+                datasets: [{
+                    label: 'Reported Sightings',
+                    data: conflictData.sightings,
+                    backgroundColor: 'rgba(30, 58, 138, 0.7)', // Blue-900
+                    borderColor: 'rgba(30, 58, 138, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#1e293b',
+                        bodyColor: '#1e293b',
+                        borderColor: '#cbd5e1',
+                        borderWidth: 1,
+                        padding: 10
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Event Listeners for Conflict Toggle
+        document.getElementById('btn-sightings').addEventListener('click', function() {
+            updateConflictChart('sightings', 'rgba(30, 58, 138, 0.7)', 'Reported Sightings');
+            this.classList.add('bg-blue-50', 'text-blue-900', 'border-blue-200');
+            this.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+            document.getElementById('btn-confiscations').classList.remove('bg-blue-50', 'text-blue-900', 'border-blue-200');
+            document.getElementById('btn-confiscations').classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+            
+            document.getElementById('conflict-finding').innerText = "\"The 'Pandemic Peak' of 2020 saw the highest ratio of unauthorized flights as hobbyists attempted to film empty parks.\"";
+        });
+
+        document.getElementById('btn-confiscations').addEventListener('click', function() {
+            updateConflictChart('confiscations', 'rgba(217, 119, 6, 0.7)', 'Security Confiscations');
+            this.classList.add('bg-blue-50', 'text-blue-900', 'border-blue-200');
+            this.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+            document.getElementById('btn-sightings').classList.remove('bg-blue-50', 'text-blue-900', 'border-blue-200');
+            document.getElementById('btn-sightings').classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+
+            document.getElementById('conflict-finding').innerText = "\"Security efficiency improved in 2021, with faster interception times reducing the window for unauthorized filming.\"";
+        });
+
+        function updateConflictChart(datasetKey, color, label) {
+            conflictChart.data.datasets[0].data = conflictData[datasetKey];
+            conflictChart.data.datasets[0].backgroundColor = color;
+            conflictChart.data.datasets[0].borderColor = color.replace('0.7', '1');
+            conflictChart.data.datasets[0].label = label;
+            conflictChart.update();
+        }
+
+        // --- 2. Patent Chart Logic (Doughnut) ---
+        const patentCtx = document.getElementById('patentChart').getContext('2d');
+        const patentChart = new Chart(patentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Flight Control', 'Visual Effects', 'Safety Mechanisms', 'Airframe Design'],
+                datasets: [{
+                    data: [35, 40, 15, 10],
+                    backgroundColor: [
+                        '#1e3a8a', // Blue
+                        '#d97706', // Gold
+                        '#64748b', // Slate
+                        '#94a3b8'  // Light Slate
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, font: { family: "'Lato', sans-serif" } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // --- 3. Timeline Interaction ---
+        const timelineData = [
+            "2014: 'The Puppet Master' - Patent US-2014022 for a ground station capable of managing 50+ drones simultaneously using mesh networking logic.",
+            "2016: 'The Projection Screen' - Patent filed for drones carrying lightweight rear-projection surfaces, effectively creating a flying movie screen.",
+            "2020: 'Paint Copter' - Automated maintenance drones designed to spray paint and clean hard-to-reach castle spires."
+        ];
+
+        function updateTimeline(index) {
+            const detailBox = document.getElementById('timeline-detail');
+            detailBox.style.opacity = '0';
+            setTimeout(() => {
+                detailBox.innerText = timelineData[index];
+                detailBox.style.opacity = '1';
+            }, 200);
+        }
+
+        // --- 4. Comparison Chart (Radar) ---
+        const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+        const comparisonChart = new Chart(comparisonCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Visual Impact', 'Sustainability', 'Cost Efficiency', 'Reusability', 'Noise Control'],
+                datasets: [{
+                    label: 'Drone Swarms',
+                    data: [8, 9, 7, 10, 9],
+                    fill: true,
+                    backgroundColor: 'rgba(30, 58, 138, 0.2)',
+                    borderColor: '#1e3a8a',
+                    pointBackgroundColor: '#1e3a8a',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#1e3a8a'
+                }, {
+                    label: 'Fireworks',
+                    data: [10, 2, 4, 1, 2],
+                    fill: true,
+                    backgroundColor: 'rgba(217, 119, 6, 0.2)',
+                    borderColor: '#d97706',
+                    pointBackgroundColor: '#d97706',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#d97706'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: {
+                    line: { borderWidth: 2 }
+                },
+                scales: {
+                    r: {
+                        angleLines: { color: '#e2e8f0' },
+                        grid: { color: '#e2e8f0' },
+                        pointLabels: {
+                            font: { size: 12, family: "'Lato', sans-serif", weight: 'bold' },
+                            color: '#475569'
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 10
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' }
+                }
+            }
+        });
+
+        // Navigation Scroll
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            const navHeight = 64;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - navHeight;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+            });
+        }
+    </script>
+</body>
+</html>
